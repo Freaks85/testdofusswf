@@ -98,6 +98,128 @@ pub async fn get_resources(
                 });
             }
         }
+        "texts" => {
+            for (id, text) in &swf.resources.texts {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "text".to_string(),
+                    name: Some(text.text.clone()),
+                    size: text.raw_data.len(),
+                    metadata: None,
+                });
+            }
+        }
+        "fonts" => {
+            for (id, font) in &swf.resources.fonts {
+                let mut metadata = HashMap::new();
+                metadata.insert("num_glyphs".to_string(), font.num_glyphs.to_string());
+
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "font".to_string(),
+                    name: font.name.clone().or_else(|| Some(format!("Font_{}", id))),
+                    size: font.data.len(),
+                    metadata: Some(metadata),
+                });
+            }
+        }
+        "shapes" => {
+            for (id, shape) in &swf.resources.shapes {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "shape".to_string(),
+                    name: Some(format!("Shape_{}", id)),
+                    size: shape.data.len(),
+                    metadata: None,
+                });
+            }
+        }
+        "binary_data" => {
+            for (id, binary) in &swf.resources.binary_data {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "binary_data".to_string(),
+                    name: Some(format!("BinaryData_{}", id)),
+                    size: binary.data.len(),
+                    metadata: None,
+                });
+            }
+        }
+        "all" => {
+            // Return all resources
+            for (id, img) in &swf.resources.images {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "image".to_string(),
+                    name: Some(format!("Image_{}", id)),
+                    size: img.data.len(),
+                    metadata: None,
+                });
+            }
+            for (id, sound) in &swf.resources.sounds {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "sound".to_string(),
+                    name: Some(format!("Sound_{}", id)),
+                    size: sound.data.len(),
+                    metadata: None,
+                });
+            }
+            for (id, sprite) in &swf.resources.sprites {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "sprite".to_string(),
+                    name: Some(format!("Sprite_{}", id)),
+                    size: sprite.tags.len(),
+                    metadata: None,
+                });
+            }
+            for (id, script) in &swf.resources.scripts {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "script".to_string(),
+                    name: Some(script.name.clone()),
+                    size: script.bytecode.len(),
+                    metadata: None,
+                });
+            }
+            for (id, text) in &swf.resources.texts {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "text".to_string(),
+                    name: Some(text.text.clone()),
+                    size: text.raw_data.len(),
+                    metadata: None,
+                });
+            }
+            for (id, font) in &swf.resources.fonts {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "font".to_string(),
+                    name: font.name.clone().or_else(|| Some(format!("Font_{}", id))),
+                    size: font.data.len(),
+                    metadata: None,
+                });
+            }
+            for (id, shape) in &swf.resources.shapes {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "shape".to_string(),
+                    name: Some(format!("Shape_{}", id)),
+                    size: shape.data.len(),
+                    metadata: None,
+                });
+            }
+            for (id, binary) in &swf.resources.binary_data {
+                resources.push(ResourceInfo {
+                    id: *id,
+                    resource_type: "binary_data".to_string(),
+                    name: Some(format!("BinaryData_{}", id)),
+                    size: binary.data.len(),
+                    metadata: None,
+                });
+            }
+        }
         _ => {
             return Err(format!("Unknown resource type: {}", resource_type));
         }
@@ -321,6 +443,22 @@ pub async fn get_swf_info(state: State<'_, SharedState>) -> Result<HashMap<Strin
     info.insert(
         "scripts_count".to_string(),
         swf.resources.scripts.len().to_string(),
+    );
+    info.insert(
+        "texts_count".to_string(),
+        swf.resources.texts.len().to_string(),
+    );
+    info.insert(
+        "fonts_count".to_string(),
+        swf.resources.fonts.len().to_string(),
+    );
+    info.insert(
+        "shapes_count".to_string(),
+        swf.resources.shapes.len().to_string(),
+    );
+    info.insert(
+        "binary_data_count".to_string(),
+        swf.resources.binary_data.len().to_string(),
     );
 
     Ok(info)
