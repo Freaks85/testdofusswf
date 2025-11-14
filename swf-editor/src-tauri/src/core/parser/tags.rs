@@ -1,6 +1,6 @@
 use crate::core::types::{Rect, Tag};
 use byteorder::{LittleEndian, ReadBytesExt};
-use std::io::{self, Cursor, Read};
+use std::io::{self, Cursor};
 use thiserror::Error;
 
 #[derive(Error, Debug)]

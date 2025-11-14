@@ -169,7 +169,7 @@ pub fn disassemble_abc(abc: &ABCFile) -> String {
 
     // Disassemble classes
     output.push_str("\n// ===== CLASSES =====\n");
-    for (i, class) in abc.classes.iter().enumerate() {
+    for (_i, class) in abc.classes.iter().enumerate() {
         let class_name = get_string(&abc.constant_pool, class.name);
         let super_name = get_string(&abc.constant_pool, class.super_name);
         output.push_str(&format!("\nclass {} extends {} {{\n", class_name, super_name));
@@ -610,7 +610,7 @@ fn parse_trait_info(cursor: &mut Cursor<&[u8]>) -> Result<TraitInfo, String> {
     let kind = kind_byte & 0x0F;
 
     // Read trait data (simplified - just skip it)
-    let mut data = Vec::new();
+    let _data = Vec::new();
     match kind {
         0 | 6 => { // Slot, Const
             read_u30(cursor)?;

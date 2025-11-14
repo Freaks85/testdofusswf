@@ -1,6 +1,5 @@
 // Image extraction and conversion
 use crate::core::types::{ImageFormat, ImageResource};
-use std::io::Cursor;
 
 /// Convert SWF image data to PNG format
 pub fn to_png(image: &ImageResource) -> Result<Vec<u8>, String> {

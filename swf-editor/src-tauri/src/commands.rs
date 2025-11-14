@@ -1,7 +1,6 @@
 use crate::core::decompiler;
 use crate::core::parser::parse_swf_file;
-use crate::core::resources::{extract_sound, to_png};
-use crate::core::types::{ImageResource, ResourceInfo, SWFFile, SoundResource};
+use crate::core::types::{ResourceInfo, SWFFile};
 use crate::state::SharedState;
 use std::collections::HashMap;
 use std::fs;
@@ -85,7 +84,7 @@ pub async fn get_resources(
             }
         }
         "scripts" => {
-            for (id, script) in &swf.resources.scripts {
+            for (_id, script) in &swf.resources.scripts {
                 let mut metadata = HashMap::new();
                 metadata.insert("script_type".to_string(), format!("{:?}", script.script_type));
                 metadata.insert("name".to_string(), script.name.clone());
@@ -254,7 +253,7 @@ pub async fn export_all_resources(
     let scripts_dir = format!("{}/scripts", output_dir);
     fs::create_dir_all(&scripts_dir).map_err(|e| e.to_string())?;
 
-    for (id, script) in &swf.resources.scripts {
+    for (_id, script) in &swf.resources.scripts {
         let path = format!("{}/{}.txt", scripts_dir, script.name);
         let decompiled = decompiler::decompile_script(&script.bytecode, script.script_type.clone())
             .unwrap_or_else(|e| format!("Error: {}", e));
@@ -398,7 +397,7 @@ pub async fn search_swf(
     case_sensitive: bool,
     state: State<'_, SharedState>,
 ) -> Result<Vec<serde_json::Value>, String> {
-    let app_state = state.lock().await;
+    let app_state = state.lock().unwrap();
 
     let swf_file = app_state
         .current_swf
