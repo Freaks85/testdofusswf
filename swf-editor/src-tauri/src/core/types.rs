@@ -208,6 +208,114 @@ pub enum Tag {
         flags: u8,
         shapes: Vec<u8>,
     },
+    ShowFrame,
+    RemoveObject {
+        character_id: u16,
+        depth: u16,
+    },
+    RemoveObject2 {
+        depth: u16,
+    },
+    FrameLabel {
+        name: String,
+        anchor: Option<u8>,
+    },
+    ExportAssets {
+        assets: Vec<(u16, String)>,
+    },
+    ImportAssets {
+        url: String,
+        assets: Vec<(u16, String)>,
+    },
+    DefineEditText {
+        character_id: u16,
+        bounds: Rect,
+        flags: u16,
+        data: Vec<u8>,
+    },
+    JPEGTables {
+        data: Vec<u8>,
+    },
+    DefineButton {
+        character_id: u16,
+        data: Vec<u8>,
+    },
+    DefineButton2 {
+        character_id: u16,
+        flags: u8,
+        data: Vec<u8>,
+    },
+    Metadata {
+        metadata: String,
+    },
+    DoInitAction {
+        sprite_id: u16,
+        actions: Vec<u8>,
+    },
+    ScriptLimits {
+        max_recursion_depth: u16,
+        script_timeout_seconds: u16,
+    },
+    SetTabIndex {
+        depth: u16,
+        tab_index: u16,
+    },
+    StartSound {
+        sound_id: u16,
+        sound_info: Vec<u8>,
+    },
+    StartSound2 {
+        sound_class_name: String,
+        sound_info: Vec<u8>,
+    },
+    SoundStreamHead {
+        data: Vec<u8>,
+    },
+    SoundStreamHead2 {
+        data: Vec<u8>,
+    },
+    SoundStreamBlock {
+        data: Vec<u8>,
+    },
+    DefineFontInfo {
+        font_id: u16,
+        data: Vec<u8>,
+    },
+    DefineFontInfo2 {
+        font_id: u16,
+        data: Vec<u8>,
+    },
+    DefineFontName {
+        font_id: u16,
+        font_name: String,
+        font_copyright: String,
+    },
+    VideoFrame {
+        stream_id: u16,
+        frame_num: u16,
+        video_data: Vec<u8>,
+    },
+    DefineVideoStream {
+        character_id: u16,
+        num_frames: u16,
+        width: u16,
+        height: u16,
+        flags: u8,
+        codec_id: u8,
+    },
+    DefineSceneAndFrameLabelData {
+        scenes: Vec<(u32, String)>,
+        frame_labels: Vec<(u32, String)>,
+    },
+    EnableDebugger {
+        password: String,
+    },
+    EnableDebugger2 {
+        password: String,
+    },
+    DebugID {
+        debug_id: Vec<u8>,
+    },
     Unknown {
         tag_type: u16,
         data: Vec<u8>,
