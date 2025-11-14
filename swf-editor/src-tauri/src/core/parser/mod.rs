@@ -257,8 +257,182 @@ fn extract_resources(tags: &[crate::core::types::Tag]) -> Resources {
                     },
                 );
             }
+            Tag::DefineText {
+                character_id,
+                bounds,
+                text_records,
+                ..
+            } | Tag::DefineText2 {
+                character_id,
+                bounds,
+                text_records,
+                ..
+            } => {
+                resources.texts.insert(
+                    *character_id,
+                    TextResource {
+                        id: *character_id,
+                        bounds: bounds.clone(),
+                        text: format!("Text_{}", character_id), // Placeholder
+                        raw_data: text_records.clone(),
+                    },
+                );
+            }
+            Tag::DefineEditText {
+                character_id,
+                bounds,
+                data,
+                ..
+            } => {
+                resources.texts.insert(
+                    *character_id,
+                    TextResource {
+                        id: *character_id,
+                        bounds: bounds.clone(),
+                        text: format!("EditText_{}", character_id),
+                        raw_data: data.clone(),
+                    },
+                );
+            }
+            Tag::DefineFont { character_id, data } => {
+                resources.fonts.insert(
+                    *character_id,
+                    FontResource {
+                        id: *character_id,
+                        name: None,
+                        num_glyphs: 0,
+                        data: data.clone(),
+                    },
+                );
+            }
+            Tag::DefineFont2 {
+                character_id,
+                name,
+                num_glyphs,
+                data,
+                ..
+            } | Tag::DefineFont3 {
+                character_id,
+                name,
+                num_glyphs,
+                data,
+                ..
+            } | Tag::DefineFont4 {
+                character_id,
+                name,
+                data,
+                ..
+            } => {
+                let glyphs = if let Tag::DefineFont4 { .. } = tag {
+                    0 // Font4 doesn't have num_glyphs in our structure
+                } else {
+                    *num_glyphs
+                };
+
+                resources.fonts.insert(
+                    *character_id,
+                    FontResource {
+                        id: *character_id,
+                        name: if name.is_empty() {
+                            None
+                        } else {
+                            Some(name.clone())
+                        },
+                        num_glyphs: glyphs,
+                        data: data.clone(),
+                    },
+                );
+            }
+            Tag::DefineShape {
+                character_id,
+                bounds,
+                shapes,
+            } | Tag::DefineShape2 {
+                character_id,
+                bounds,
+                shapes,
+            } | Tag::DefineShape3 {
+                character_id,
+                bounds,
+                shapes,
+            } => {
+                resources.shapes.insert(
+                    *character_id,
+                    ShapeResource {
+                        id: *character_id,
+                        bounds: bounds.clone(),
+                        edge_bounds: None,
+                        data: shapes.clone(),
+                    },
+                );
+            }
+            Tag::DefineShape4 {
+                character_id,
+                bounds,
+                edge_bounds,
+                shapes,
+                ..
+            } => {
+                resources.shapes.insert(
+                    *character_id,
+                    ShapeResource {
+                        id: *character_id,
+                        bounds: bounds.clone(),
+                        edge_bounds: Some(edge_bounds.clone()),
+                        data: shapes.clone(),
+                    },
+                );
+            }
+            Tag::DoInitAction {
+                sprite_id,
+                actions,
+            } => {
+                resources.scripts.insert(
+                    *sprite_id,
+                    ScriptResource {
+                        id: *sprite_id,
+                        name: format!("InitAction_{}", sprite_id),
+                        bytecode: actions.clone(),
+                        decompiled: None,
+                        script_type: ScriptType::AS2,
+                    },
+                );
+            }
             _ => {
-                // Other tags not yet handled
+                // Other tags not yet handled for resource extraction
+            }
+        }
+    }
+
+    // Also recursively extract resources from sprite tags
+    for tag in tags {
+        if let Tag::DefineSprite { tags: sprite_tags, .. } = tag {
+            let sprite_resources = extract_resources(sprite_tags);
+
+            // Merge sprite resources into main resources
+            for (id, img) in sprite_resources.images {
+                resources.images.insert(id, img);
+            }
+            for (id, snd) in sprite_resources.sounds {
+                resources.sounds.insert(id, snd);
+            }
+            for (id, spr) in sprite_resources.sprites {
+                resources.sprites.insert(id, spr);
+            }
+            for (id, scr) in sprite_resources.scripts {
+                resources.scripts.insert(id, scr);
+            }
+            for (id, txt) in sprite_resources.texts {
+                resources.texts.insert(id, txt);
+            }
+            for (id, fnt) in sprite_resources.fonts {
+                resources.fonts.insert(id, fnt);
+            }
+            for (id, shp) in sprite_resources.shapes {
+                resources.shapes.insert(id, shp);
+            }
+            for (id, bin) in sprite_resources.binary_data {
+                resources.binary_data.insert(id, bin);
             }
         }
     }
