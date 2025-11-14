@@ -330,9 +330,174 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
           </div>
         )}
 
-        {!resourceType.match(/scripts|images|sounds|sprites/) && data && (
+        {resourceType === 'texts' && (
+          <div className="panel-content" style={{ padding: '20px' }}>
+            <div style={{
+              background: 'var(--bg-tertiary)',
+              padding: '20px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-default)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '32px' }}>📝</span>
+                <div>
+                  <h3 style={{ margin: 0, color: 'var(--text-accent)' }}>Text Field</h3>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
+                    ID: {resourceId}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'var(--bg-primary)',
+                padding: '16px',
+                borderRadius: '6px',
+                marginTop: '16px'
+              }}>
+                <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-secondary)' }}>Text Content</h4>
+                <div style={{
+                  padding: '12px',
+                  background: 'var(--bg-secondary)',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  color: 'var(--text-primary)',
+                  wordWrap: 'break-word'
+                }}>
+                  {resourceInfo.name || 'No text content'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {resourceType === 'fonts' && (
+          <div className="panel-content" style={{ padding: '20px' }}>
+            <div style={{
+              background: 'var(--bg-tertiary)',
+              padding: '20px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-default)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '32px' }}>🔤</span>
+                <div>
+                  <h3 style={{ margin: 0, color: 'var(--text-accent)' }}>Font Resource</h3>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
+                    {resourceInfo.name || `Font_${resourceId}`}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'var(--bg-primary)',
+                padding: '16px',
+                borderRadius: '6px',
+                marginTop: '16px'
+              }}>
+                <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-secondary)' }}>Font Properties</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 16px', fontSize: '13px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Glyphs:</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{resourceInfo.metadata?.num_glyphs || 0}</span>
+
+                  <span style={{ color: 'var(--text-muted)' }}>Data Size:</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{(resourceInfo.size / 1024).toFixed(2)} KB</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {resourceType === 'shapes' && (
+          <div className="panel-content" style={{ padding: '20px' }}>
+            <div style={{
+              background: 'var(--bg-tertiary)',
+              padding: '20px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-default)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '32px' }}>⬢</span>
+                <div>
+                  <h3 style={{ margin: 0, color: 'var(--text-accent)' }}>Vector Shape</h3>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
+                    ID: {resourceId}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'var(--bg-primary)',
+                padding: '16px',
+                borderRadius: '6px',
+                marginTop: '16px'
+              }}>
+                <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-secondary)' }}>Shape Info</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-secondary)' }}>
+                  <li>Vector graphics definition</li>
+                  <li>Contains paths, fills, and strokes</li>
+                  <li>Size: {(resourceInfo.size / 1024).toFixed(2)} KB</li>
+                </ul>
+              </div>
+
+              <div style={{
+                marginTop: '16px',
+                padding: '12px',
+                background: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid rgba(255, 193, 7, 0.3)',
+                borderRadius: '6px',
+                color: 'var(--text-secondary)',
+                fontSize: '13px'
+              }}>
+                <strong>💡 Tip:</strong> SVG rendering preview coming soon!
+              </div>
+            </div>
+          </div>
+        )}
+
+        {resourceType === 'binary_data' && data && (
+          <div className="panel-content" style={{ padding: '20px' }}>
+            <div style={{
+              background: 'var(--bg-tertiary)',
+              padding: '20px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-default)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '32px' }}>📦</span>
+                <div>
+                  <h3 style={{ margin: 0, color: 'var(--text-accent)' }}>Binary Data</h3>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
+                    ID: {resourceId} • Size: {(data.length / 1024).toFixed(2)} KB
+                  </p>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'var(--bg-primary)',
+                padding: '16px',
+                borderRadius: '6px',
+                marginTop: '16px'
+              }}>
+                <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-secondary)' }}>Hex Dump (first 256 bytes)</h4>
+                <pre className="code-editor" style={{
+                  fontSize: '11px',
+                  margin: 0,
+                  fontFamily: 'Consolas, Monaco, monospace',
+                  lineHeight: '1.5'
+                }}>
+                  {Array.from(data.slice(0, 256)).map((b, i) =>
+                    (i % 16 === 0 ? '\n' : '') + b.toString(16).padStart(2, '0') + ' '
+                  )}
+                  {data.length > 256 && '\n... (truncated)'}
+                </pre>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!resourceType.match(/scripts|images|sounds|sprites|texts|fonts|shapes|binary_data/) && data && (
           <div className="panel-content">
-            <p className="text-secondary">Binary data ({data.length} bytes)</p>
+            <p className="text-secondary">Unknown resource type ({data.length} bytes)</p>
             <pre className="code-editor" style={{ fontSize: '11px', marginTop: '12px' }}>
               {Array.from(data.slice(0, 256)).map((b, i) =>
                 (i % 16 === 0 ? '\n' : '') + b.toString(16).padStart(2, '0') + ' '
