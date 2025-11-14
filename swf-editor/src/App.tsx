@@ -30,34 +30,27 @@ const TagsDebugView: React.FC = () => {
       <button
         onClick={showTags ? () => setShowTags(false) : loadTags}
         disabled={loading}
-        style={{
-          padding: '8px 16px',
-          background: '#FF9800',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: loading ? 'wait' : 'pointer',
-        }}
+        className="btn-warning"
       >
         {loading ? 'Loading...' : showTags ? '🔽 Hide Tags' : '🔍 Show All Tags (Debug)'}
       </button>
 
       {showTags && tags.length > 0 && (
-        <div style={{
-          marginTop: '12px',
-          background: '#fff3e0',
-          padding: '12px',
-          borderRadius: '4px',
-          maxHeight: '400px',
-          overflow: 'auto',
-        }}>
-          <h3 style={{ marginTop: 0, marginBottom: '12px' }}>Detected Tags ({tags.length})</h3>
-          <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>
-            {tags.map((tag, i) => (
-              <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #ffe0b2' }}>
-                {tag}
-              </div>
-            ))}
+        <div className="panel fade-in" style={{ marginTop: '12px', maxHeight: '400px' }}>
+          <div className="panel-header">
+            <span>Detected Tags ({tags.length})</span>
+          </div>
+          <div className="panel-content overflow-auto" style={{ maxHeight: '350px' }}>
+            <div className="monospace" style={{ fontSize: '13px' }}>
+              {tags.map((tag, i) => (
+                <div key={i} style={{
+                  padding: '6px 0',
+                  borderBottom: i < tags.length - 1 ? '1px solid var(--border-default)' : 'none'
+                }}>
+                  {tag}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -166,8 +159,10 @@ function App() {
   };
 
   const handleSelectResource = (type: ResourceType, id: number) => {
-    const resourceList = state.resources[type];
-    const info = resourceList.find((r) => r.id === id);
+    const resourceList = state.resources[type as keyof typeof state.resources];
+    if (!resourceList) return;
+
+    const info = resourceList.find((r: ResourceInfo) => r.id === id);
 
     if (info) {
       setState((prev) => ({
@@ -208,49 +203,23 @@ function App() {
 
   return (
     <div
-      style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
+      className="app-container flex flex-col h-full"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Header */}
-      <div
-        style={{
-          padding: '12px 16px',
-          background: '#2196F3',
-          color: 'white',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: '20px' }}>SWF Editor</h1>
-        <div>
-          <button
-            onClick={handleOpenFile}
-            style={{
-              padding: '8px 16px',
-              marginRight: '8px',
-              background: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
+      <div className="app-header flex justify-between items-center p-3" style={{
+        background: 'var(--button-primary)',
+        borderBottom: '1px solid var(--border-default)',
+      }}>
+        <h2 style={{ margin: 0 }}>SWF Editor</h2>
+        <div className="flex gap-2">
+          <button onClick={handleOpenFile} className="btn-secondary">
             📁 Open SWF
           </button>
           {state.swfFile && (
-            <button
-              onClick={handleExportAll}
-              style={{
-                padding: '8px 16px',
-                background: '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
+            <button onClick={handleExportAll} className="btn-success">
               📤 Export All
             </button>
           )}
@@ -258,52 +227,41 @@ function App() {
       </div>
 
       {/* Main content */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="flex h-full overflow-hidden" style={{ flex: 1 }}>
         {state.loading && (
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div>Loading SWF file...</div>
+          <div className="flex items-center justify-center w-full">
+            <div className="flex items-center gap-2">
+              <div className="spinner"></div>
+              <span>Loading SWF file...</span>
+            </div>
           </div>
         )}
 
         {state.error && (
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'red',
-            }}
-          >
-            <div>
-              <h2>Error</h2>
-              <p>{state.error}</p>
+          <div className="flex items-center justify-center w-full">
+            <div className="panel" style={{ maxWidth: '600px' }}>
+              <div className="panel-header text-error">
+                <h3 style={{ margin: 0 }}>Error</h3>
+              </div>
+              <div className="panel-content">
+                <p className="text-error">{state.error}</p>
+              </div>
             </div>
           </div>
         )}
 
         {!state.loading && !state.error && !state.swfFile && (
           <div
+            className="flex items-center justify-center w-full"
             style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: isDragging ? '#e3f2fd' : 'transparent',
-              border: isDragging ? '2px dashed #2196F3' : 'none',
+              background: isDragging ? 'var(--selection-bg)' : 'transparent',
+              border: isDragging ? '2px dashed var(--border-focus)' : 'none',
               transition: 'all 0.2s',
             }}
           >
             <div style={{ textAlign: 'center', padding: '40px' }}>
               <h2>Drop a SWF file here</h2>
-              <p>or click "Open SWF" button above</p>
+              <p className="text-secondary">or click "Open SWF" button above</p>
             </div>
           </div>
         )}
@@ -311,7 +269,7 @@ function App() {
         {!state.loading && !state.error && state.swfFile && (
           <>
             {/* File Tree */}
-            <div style={{ width: '300px', overflow: 'auto' }}>
+            <div style={{ width: '300px', borderRight: '1px solid var(--border-default)' }} className="overflow-auto bg-secondary">
               <FileTree
                 resources={state.resources}
                 onSelectResource={handleSelectResource}
@@ -324,7 +282,7 @@ function App() {
             </div>
 
             {/* Viewer */}
-            <div style={{ flex: 1, overflow: 'auto' }}>
+            <div className="overflow-auto bg-primary" style={{ flex: 1 }}>
               {state.selectedResource ? (
                 <Viewer
                   resourceType={state.selectedResource.type}
@@ -332,21 +290,24 @@ function App() {
                   resourceInfo={state.selectedResource.info}
                 />
               ) : (
-                <div style={{ padding: '20px' }}>
+                <div className="p-4">
                   <h2>SWF File Information</h2>
                   {state.swfInfo && (
-                    <div style={{ background: '#f5f5f5', padding: '16px', borderRadius: '4px', marginBottom: '20px' }}>
-                      {Object.entries(state.swfInfo).map(([key, value]) => (
-                        <div key={key} style={{ marginBottom: '8px' }}>
-                          <strong>{key.replace(/_/g, ' ')}:</strong> {value}
-                        </div>
-                      ))}
+                    <div className="panel" style={{ marginBottom: '20px' }}>
+                      <div className="panel-content">
+                        {Object.entries(state.swfInfo).map(([key, value]) => (
+                          <div key={key} style={{ marginBottom: '8px' }}>
+                            <strong className="text-accent">{key.replace(/_/g, ' ')}:</strong>{' '}
+                            <span className="text-secondary">{value}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
                   <TagsDebugView />
 
-                  <p style={{ marginTop: '20px', color: '#666' }}>
+                  <p className="text-muted" style={{ marginTop: '20px' }}>
                     Select a resource from the tree to view it.
                   </p>
                 </div>
@@ -359,15 +320,16 @@ function App() {
       {/* Status bar */}
       {state.swfFile && (
         <div
+          className="p-2 text-muted"
           style={{
-            padding: '8px 16px',
-            background: '#f5f5f5',
-            borderTop: '1px solid #ddd',
+            background: 'var(--bg-tertiary)',
+            borderTop: '1px solid var(--border-default)',
             fontSize: '12px',
           }}
         >
-          Status: Ready | File: {state.swfFile.path} | Tags: {state.swfFile.tags.length} | Images:{' '}
-          {state.resources.images.length} | Sounds: {state.resources.sounds.length} | Scripts:{' '}
+          <span className="status-dot status-success"></span>
+          <strong>Status:</strong> Ready | <strong>File:</strong> {state.swfFile.path} | <strong>Tags:</strong> {state.swfFile.tags.length} | <strong>Images:</strong>{' '}
+          {state.resources.images.length} | <strong>Sounds:</strong> {state.resources.sounds.length} | <strong>Scripts:</strong>{' '}
           {state.resources.scripts.length}
         </div>
       )}

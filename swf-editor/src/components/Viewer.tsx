@@ -67,54 +67,71 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
   };
 
   if (loading) {
-    return <div style={{ padding: '20px' }}>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="flex items-center gap-2">
+          <div className="spinner"></div>
+          <span>Loading resource...</span>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div style={{ padding: '20px', color: 'red' }}>Error: {error}</div>;
+    return (
+      <div className="p-4">
+        <div className="panel">
+          <div className="panel-header text-error">
+            <span>Error Loading Resource</span>
+          </div>
+          <div className="panel-content">
+            <p className="text-error">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="p-4 h-full flex flex-col">
       <div style={{ marginBottom: '16px' }}>
         <h2>{resourceInfo.name || `${resourceType}_${resourceId}`}</h2>
-        <div style={{ background: '#f5f5f5', padding: '12px', borderRadius: '4px' }}>
-          <div><strong>ID:</strong> {resourceId}</div>
-          <div><strong>Type:</strong> {resourceInfo.resource_type}</div>
-          <div><strong>Size:</strong> {(resourceInfo.size / 1024).toFixed(2)} KB</div>
-          {resourceInfo.metadata && Object.entries(resourceInfo.metadata).map(([key, value]) => (
-            <div key={key}><strong>{key}:</strong> {value}</div>
-          ))}
+        <div className="panel" style={{ marginTop: '12px' }}>
+          <div className="panel-content">
+            <div className="flex gap-3" style={{ flexWrap: 'wrap' }}>
+              <div><strong className="text-accent">ID:</strong> <span className="text-secondary">{resourceId}</span></div>
+              <div><strong className="text-accent">Type:</strong> <span className="text-secondary">{resourceInfo.resource_type}</span></div>
+              <div><strong className="text-accent">Size:</strong> <span className="text-secondary">{(resourceInfo.size / 1024).toFixed(2)} KB</span></div>
+              {resourceInfo.metadata && Object.entries(resourceInfo.metadata).map(([key, value]) => (
+                <div key={key}><strong className="text-accent">{key}:</strong> <span className="text-secondary">{value}</span></div>
+              ))}
+            </div>
+          </div>
         </div>
         <button
           onClick={handleExport}
-          style={{
-            marginTop: '12px',
-            padding: '8px 16px',
-            background: '#2196F3',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
+          className="btn-primary"
+          style={{ marginTop: '12px' }}
         >
-          Export
+          📤 Export
         </button>
       </div>
 
-      <div style={{ flex: 1, overflow: 'auto', background: '#fafafa', padding: '12px', borderRadius: '4px' }}>
+      <div className="panel overflow-auto" style={{ flex: 1 }}>
         {resourceType === 'scripts' && decompiled && (
-          <pre style={{ margin: 0, fontSize: '12px', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-            {decompiled}
-          </pre>
+          <div className="panel-content">
+            <pre className="code-editor" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+              {decompiled}
+            </pre>
+          </div>
         )}
 
         {resourceType === 'images' && data && (
-          <div style={{ textAlign: 'center' }}>
+          <div className="panel-content" style={{ textAlign: 'center' }}>
             <img
               src={`data:image/png;base64,${btoa(String.fromCharCode(...data))}`}
               alt={`Image ${resourceId}`}
-              style={{ maxWidth: '100%', maxHeight: '600px' }}
+              style={{ maxWidth: '100%', maxHeight: '600px', borderRadius: '4px' }}
               onError={() => {
                 setError('Failed to load image');
               }}
@@ -123,22 +140,32 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
         )}
 
         {resourceType === 'sounds' && data && (
-          <div>
-            <p>Sound resource (playback not yet implemented)</p>
-            <p>Raw data size: {data.length} bytes</p>
+          <div className="panel-content">
+            <div className="flex items-center gap-2 p-3 rounded" style={{ background: 'var(--bg-tertiary)' }}>
+              <span style={{ fontSize: '24px' }}>🔊</span>
+              <div>
+                <p className="text-secondary" style={{ margin: 0 }}>Sound resource (playback not yet implemented)</p>
+                <p className="text-muted" style={{ margin: '4px 0 0 0', fontSize: '12px' }}>Raw data size: {data.length} bytes</p>
+              </div>
+            </div>
           </div>
         )}
 
         {resourceType === 'sprites' && (
-          <div>
-            <p>Sprite preview not yet implemented</p>
+          <div className="panel-content">
+            <div className="flex items-center gap-2 p-3 rounded" style={{ background: 'var(--bg-tertiary)' }}>
+              <span style={{ fontSize: '24px' }}>🎬</span>
+              <div>
+                <p className="text-secondary" style={{ margin: 0 }}>Sprite preview not yet implemented</p>
+              </div>
+            </div>
           </div>
         )}
 
         {!resourceType.match(/scripts|images|sounds|sprites/) && data && (
-          <div>
-            <p>Binary data ({data.length} bytes)</p>
-            <pre style={{ fontSize: '10px', fontFamily: 'monospace' }}>
+          <div className="panel-content">
+            <p className="text-secondary">Binary data ({data.length} bytes)</p>
+            <pre className="code-editor" style={{ fontSize: '11px', marginTop: '12px' }}>
               {Array.from(data.slice(0, 256)).map((b, i) =>
                 (i % 16 === 0 ? '\n' : '') + b.toString(16).padStart(2, '0') + ' '
               )}
