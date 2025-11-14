@@ -80,6 +80,11 @@ pub fn parse_header(data: &[u8]) -> Result<(SWFHeader, usize), HeaderError> {
     ))
 }
 
+/// Parse a Rect structure from decompressed data (public function)
+pub fn parse_rect_from_decompressed(data: &[u8]) -> Result<(Rect, usize), HeaderError> {
+    parse_rect(data)
+}
+
 /// Parse a Rect structure (variable-length bitfield)
 fn parse_rect(data: &[u8]) -> Result<(Rect, usize), HeaderError> {
     if data.is_empty() {

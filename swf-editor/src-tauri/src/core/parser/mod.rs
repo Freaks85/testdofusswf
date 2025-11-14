@@ -34,27 +34,44 @@ pub fn parse_swf_file(path: &str) -> Result<SWFFile, ParseError> {
         return Err(ParseError::FileTooSmall);
     }
 
-    // Parse header from first 8 bytes
-    let (header, header_size) = header::parse_header(&file_data)?;
+    // Read basic header info (first 8 bytes - always uncompressed)
+    let signature = String::from_utf8_lossy(&file_data[0..3]).to_string();
+    let version = file_data[3];
+    let file_length = u32::from_le_bytes([file_data[4], file_data[5], file_data[6], file_data[7]]);
+    let compressed = signature != "FWS";
 
-    // Decompress the body if necessary
-    let body_data = if header.compressed {
-        // The first 8 bytes are uncompressed, rest is compressed
-        let compressed_body = &file_data[8..];
-        let decompressed = compression::decompress_swf_body(&header.signature, compressed_body)?;
-
-        // Reconstruct: uncompressed header + remaining header data + decompressed body
-        let mut full_data = Vec::new();
-        full_data.extend_from_slice(&file_data[8..header_size]);
-        full_data.extend_from_slice(&decompressed);
-        full_data
+    // Decompress if necessary
+    let decompressed_data = if compressed {
+        compression::decompress_swf_body(&signature, &file_data[8..])?
     } else {
-        // Already uncompressed, just take from after header
         file_data[8..].to_vec()
     };
 
-    // Parse tags from the body
-    let tags_data = &body_data[header_size - 8..]; // Adjust for the 8 bytes we already processed
+    // Now parse the full header from decompressed data
+    let (frame_size, rect_size) = header::parse_rect_from_decompressed(&decompressed_data)?;
+
+    // Frame rate (2 bytes, 8.8 fixed point)
+    let frame_rate_bytes = &decompressed_data[rect_size..rect_size + 2];
+    let frame_rate_raw = u16::from_le_bytes([frame_rate_bytes[0], frame_rate_bytes[1]]);
+    let frame_rate = (frame_rate_raw as f32) / 256.0;
+
+    // Frame count (2 bytes)
+    let frame_count_bytes = &decompressed_data[rect_size + 2..rect_size + 4];
+    let frame_count = u16::from_le_bytes([frame_count_bytes[0], frame_count_bytes[1]]);
+
+    let header = crate::core::types::SWFHeader {
+        signature,
+        version,
+        file_length,
+        frame_size,
+        frame_rate,
+        frame_count,
+        compressed,
+    };
+
+    // Tags start after the rect + frame_rate + frame_count
+    let tags_start = rect_size + 4;
+    let tags_data = &decompressed_data[tags_start..];
     let tags = tags::parse_tags(tags_data)?;
 
     // Extract resources from tags
