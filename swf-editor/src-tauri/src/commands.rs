@@ -326,3 +326,66 @@ pub async fn get_swf_info(state: State<'_, SharedState>) -> Result<HashMap<Strin
 
     Ok(info)
 }
+
+/// Get debug info about all tags in the SWF
+#[tauri::command]
+pub async fn get_tags_debug(state: State<'_, SharedState>) -> Result<Vec<String>, String> {
+    let app_state = state.lock().unwrap();
+
+    let swf = app_state
+        .get_current_swf()
+        .ok_or_else(|| "No SWF file loaded".to_string())?;
+
+    let mut tags_info = Vec::new();
+
+    for (i, tag) in swf.tags.iter().enumerate() {
+        let tag_desc = match tag {
+            crate::core::types::Tag::End => "End".to_string(),
+            crate::core::types::Tag::SetBackgroundColor { r, g, b } => {
+                format!("SetBackgroundColor (RGB: {}, {}, {})", r, g, b)
+            }
+            crate::core::types::Tag::FileAttributes { .. } => "FileAttributes".to_string(),
+            crate::core::types::Tag::DefineBitsLossless { character_id, width, height, .. } => {
+                format!("DefineBitsLossless (ID: {}, {}x{})", character_id, width, height)
+            }
+            crate::core::types::Tag::DefineBitsLossless2 { character_id, width, height, .. } => {
+                format!("DefineBitsLossless2 (ID: {}, {}x{})", character_id, width, height)
+            }
+            crate::core::types::Tag::DefineBitsJPEG { character_id, .. } => {
+                format!("DefineBitsJPEG (ID: {})", character_id)
+            }
+            crate::core::types::Tag::DefineBitsJPEG2 { character_id, .. } => {
+                format!("DefineBitsJPEG2 (ID: {})", character_id)
+            }
+            crate::core::types::Tag::DefineBitsJPEG3 { character_id, .. } => {
+                format!("DefineBitsJPEG3 (ID: {})", character_id)
+            }
+            crate::core::types::Tag::DefineSound { character_id, format, .. } => {
+                format!("DefineSound (ID: {}, format: {})", character_id, format)
+            }
+            crate::core::types::Tag::DefineSprite { character_id, frame_count, .. } => {
+                format!("DefineSprite (ID: {}, frames: {})", character_id, frame_count)
+            }
+            crate::core::types::Tag::DoABC { name, .. } => {
+                format!("DoABC ({})", name)
+            }
+            crate::core::types::Tag::DoAction { actions } => {
+                format!("DoAction ({} bytes)", actions.len())
+            }
+            crate::core::types::Tag::SymbolClass { symbols } => {
+                format!("SymbolClass ({} symbols)", symbols.len())
+            }
+            crate::core::types::Tag::DefineBinaryData { character_id, data } => {
+                format!("DefineBinaryData (ID: {}, {} bytes)", character_id, data.len())
+            }
+            crate::core::types::Tag::Unknown { tag_type, data } => {
+                format!("Unknown (type: {}, {} bytes)", tag_type, data.len())
+            }
+            _ => format!("{:?}", tag).chars().take(50).collect(),
+        };
+
+        tags_info.push(format!("#{}: {}", i, tag_desc));
+    }
+
+    Ok(tags_info)
+}

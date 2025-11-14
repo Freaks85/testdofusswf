@@ -28,6 +28,7 @@ pub fn run() {
             commands::export_all_resources,
             commands::save_swf,
             commands::get_swf_info,
+            commands::get_tags_debug,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

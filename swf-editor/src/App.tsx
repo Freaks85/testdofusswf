@@ -6,6 +6,65 @@ import { FileTree } from './components/FileTree';
 import { Viewer } from './components/Viewer';
 import './App.css';
 
+// Component to show debug info about tags
+const TagsDebugView: React.FC = () => {
+  const [tags, setTags] = React.useState<string[]>([]);
+  const [showTags, setShowTags] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+
+  const loadTags = async () => {
+    setLoading(true);
+    try {
+      const tagsData = await invoke<string[]>('get_tags_debug', {});
+      setTags(tagsData);
+      setShowTags(true);
+    } catch (err) {
+      console.error('Failed to load tags:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '20px' }}>
+      <button
+        onClick={showTags ? () => setShowTags(false) : loadTags}
+        disabled={loading}
+        style={{
+          padding: '8px 16px',
+          background: '#FF9800',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: loading ? 'wait' : 'pointer',
+        }}
+      >
+        {loading ? 'Loading...' : showTags ? '🔽 Hide Tags' : '🔍 Show All Tags (Debug)'}
+      </button>
+
+      {showTags && tags.length > 0 && (
+        <div style={{
+          marginTop: '12px',
+          background: '#fff3e0',
+          padding: '12px',
+          borderRadius: '4px',
+          maxHeight: '400px',
+          overflow: 'auto',
+        }}>
+          <h3 style={{ marginTop: 0, marginBottom: '12px' }}>Detected Tags ({tags.length})</h3>
+          <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>
+            {tags.map((tag, i) => (
+              <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #ffe0b2' }}>
+                {tag}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface AppState {
   swfFile: SWFFile | null;
   resources: {
@@ -276,7 +335,7 @@ function App() {
                 <div style={{ padding: '20px' }}>
                   <h2>SWF File Information</h2>
                   {state.swfInfo && (
-                    <div style={{ background: '#f5f5f5', padding: '16px', borderRadius: '4px' }}>
+                    <div style={{ background: '#f5f5f5', padding: '16px', borderRadius: '4px', marginBottom: '20px' }}>
                       {Object.entries(state.swfInfo).map(([key, value]) => (
                         <div key={key} style={{ marginBottom: '8px' }}>
                           <strong>{key.replace(/_/g, ' ')}:</strong> {value}
@@ -284,6 +343,9 @@ function App() {
                       ))}
                     </div>
                   )}
+
+                  <TagsDebugView />
+
                   <p style={{ marginTop: '20px', color: '#666' }}>
                     Select a resource from the tree to view it.
                   </p>
