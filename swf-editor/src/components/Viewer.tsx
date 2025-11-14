@@ -34,6 +34,11 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
   const [imagePreviewURL, setImagePreviewURL] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Audio playback state
+  const [audioURL, setAudioURL] = React.useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
+
   React.useEffect(() => {
     setLoading(true);
     setError(null);
@@ -65,6 +70,40 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
 
     loadResource();
   }, [resourceType, resourceId]);
+
+  // Create audio URL for sound resources
+  React.useEffect(() => {
+    if (resourceType === 'sounds' && data) {
+      // Clean up previous audio URL
+      if (audioURL) {
+        URL.revokeObjectURL(audioURL);
+      }
+
+      // Check if it's MP3 format (most common in SWF)
+      const format = resourceInfo.metadata?.format || '';
+      if (format.toLowerCase().includes('mp3')) {
+        // Create blob URL for MP3 data
+        const blob = new Blob([data], { type: 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        setAudioURL(url);
+      } else {
+        setAudioURL(null);
+      }
+    } else {
+      // Clean up when switching away from sounds
+      if (audioURL) {
+        URL.revokeObjectURL(audioURL);
+        setAudioURL(null);
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (audioURL) {
+        URL.revokeObjectURL(audioURL);
+      }
+    };
+  }, [resourceType, data, resourceInfo.metadata?.format]);
 
   const handleExport = async () => {
     try {
@@ -177,6 +216,22 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
     setImagePreviewURL(null);
     setSelectedImageFile(null);
     setReplacingImage(false);
+  };
+
+  // Audio playback handlers
+  const handlePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
   };
 
   if (loading) {
@@ -447,17 +502,99 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
                 </div>
               </div>
 
-              <div style={{
-                marginTop: '16px',
-                padding: '12px',
-                background: 'rgba(255, 193, 7, 0.1)',
-                border: '1px solid rgba(255, 193, 7, 0.3)',
-                borderRadius: '6px',
-                color: 'var(--text-secondary)',
-                fontSize: '13px'
-              }}>
-                <strong>💡 Tip:</strong> Audio playback coming soon! You can export this sound to play it externally.
-              </div>
+              {/* Audio Player */}
+              {audioURL ? (
+                <div style={{
+                  marginTop: '16px',
+                  padding: '16px',
+                  background: 'var(--bg-primary)',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-default)'
+                }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-secondary)' }}>Audio Player</h4>
+
+                  {/* Hidden audio element */}
+                  <audio
+                    ref={audioRef}
+                    src={audioURL}
+                    onEnded={handleAudioEnded}
+                    style={{ display: 'none' }}
+                  />
+
+                  {/* Custom controls */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px',
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: '6px'
+                  }}>
+                    <button
+                      onClick={handlePlayPause}
+                      className="btn-primary"
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        fontSize: '20px',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {isPlaying ? '⏸️' : '▶️'}
+                    </button>
+
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        height: '4px',
+                        background: 'var(--border-default)',
+                        borderRadius: '2px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          height: '100%',
+                          width: isPlaying ? '100%' : '0%',
+                          background: 'var(--button-primary)',
+                          transition: 'width 0.3s ease'
+                        }}></div>
+                      </div>
+                      <div style={{
+                        marginTop: '8px',
+                        fontSize: '12px',
+                        color: 'var(--text-muted)'
+                      }}>
+                        {isPlaying ? 'Playing...' : 'Ready to play'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Native audio controls as fallback */}
+                  <audio
+                    src={audioURL}
+                    controls
+                    style={{
+                      width: '100%',
+                      marginTop: '12px',
+                      height: '40px'
+                    }}
+                  />
+                </div>
+              ) : (
+                <div style={{
+                  marginTop: '16px',
+                  padding: '12px',
+                  background: 'rgba(255, 193, 7, 0.1)',
+                  border: '1px solid rgba(255, 193, 7, 0.3)',
+                  borderRadius: '6px',
+                  color: 'var(--text-secondary)',
+                  fontSize: '13px'
+                }}>
+                  <strong>⚠️ Note:</strong> This sound format ({resourceInfo.metadata?.format || 'Unknown'}) cannot be played directly in the browser.
+                  Please export it to play externally. MP3 sounds can be played directly.
+                </div>
+              )}
             </div>
           </div>
         )}
