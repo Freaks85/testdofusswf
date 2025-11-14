@@ -23,6 +23,11 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ visible, onClose, onSe
   const [searchMode, setSearchMode] = useState<'all' | 'name' | 'content'>('all');
   const [caseSensitive, setCaseSensitive] = useState(false);
 
+  // Replace functionality
+  const [showReplace, setShowReplace] = useState(false);
+  const [replaceText, setReplaceText] = useState('');
+  const [replacing, setReplacing] = useState(false);
+
   const handleSearch = async () => {
     if (!query.trim()) {
       setResults([]);
@@ -42,6 +47,35 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ visible, onClose, onSe
       setResults([]);
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleReplaceAll = async () => {
+    if (!query.trim()) {
+      alert('Please enter text to find');
+      return;
+    }
+
+    if (!confirm(`Replace all occurrences of "${query}" with "${replaceText}"?\n\nThis will affect all text resources.`)) {
+      return;
+    }
+
+    setReplacing(true);
+    try {
+      const count = await invoke<number>('replace_all_text', {
+        findText: query,
+        replaceText: replaceText,
+        caseSensitive: caseSensitive,
+      });
+
+      alert(`Replaced in ${count} text resource(s)!\n\nRemember to save the SWF file.`);
+
+      // Refresh search results
+      await handleSearch();
+    } catch (error) {
+      alert(`Replace failed: ${error}`);
+    } finally {
+      setReplacing(false);
     }
   };
 
@@ -72,7 +106,16 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ visible, onClose, onSe
     <div className="search-panel-overlay" onClick={onClose}>
       <div className="search-panel panel" onClick={(e) => e.stopPropagation()}>
         <div className="panel-header flex justify-between items-center">
-          <h3 style={{ margin: 0 }}>Search SWF</h3>
+          <div className="flex items-center gap-2">
+            <h3 style={{ margin: 0 }}>Search {showReplace && '& Replace'}</h3>
+            <button
+              onClick={() => setShowReplace(!showReplace)}
+              className="btn-secondary"
+              style={{ fontSize: '11px', padding: '4px 8px' }}
+            >
+              {showReplace ? '🔍 Search Only' : '🔄 Show Replace'}
+            </button>
+          </div>
           <button onClick={onClose} className="btn-icon">✕</button>
         </div>
 
@@ -103,6 +146,33 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ visible, onClose, onSe
               {searching ? '🔍 Searching...' : '🔍 Search'}
             </button>
           </div>
+
+          {/* Replace Input */}
+          {showReplace && (
+            <div className="flex gap-2" style={{ marginBottom: '12px' }}>
+              <input
+                type="text"
+                value={replaceText}
+                onChange={(e) => setReplaceText(e.target.value)}
+                placeholder="Replace with..."
+                className="flex-1"
+                style={{
+                  padding: '8px 12px',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '4px',
+                  color: 'var(--text-primary)',
+                }}
+              />
+              <button
+                onClick={handleReplaceAll}
+                disabled={replacing || !query.trim()}
+                className="btn-success"
+              >
+                {replacing ? '🔄 Replacing...' : '🔄 Replace All'}
+              </button>
+            </div>
+          )}
 
           {/* Search Options */}
           <div className="flex gap-4" style={{ marginBottom: '16px' }}>

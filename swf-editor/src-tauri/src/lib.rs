@@ -34,6 +34,7 @@ pub fn run() {
             commands::update_image,
             commands::update_script,
             commands::save_swf_as,
+            commands::replace_all_text,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

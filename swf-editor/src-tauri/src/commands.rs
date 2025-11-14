@@ -825,3 +825,48 @@ pub async fn save_swf_as(
 
     crate::core::writer::write_swf(swf, &output_path).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn replace_all_text(
+    find_text: String,
+    replace_text: String,
+    case_sensitive: bool,
+    state: State<'_, SharedState>,
+) -> Result<usize, String> {
+    let mut app_state = state.lock().unwrap();
+    let swf = app_state.current_swf.as_mut()
+        .ok_or_else(|| "No SWF file loaded".to_string())?;
+
+    let mut count = 0;
+
+    // Replace in text resources
+    for (_key, text_resource) in swf.resources.texts.iter_mut() {
+        let original = text_resource.text.clone();
+        if case_sensitive {
+            text_resource.text = text_resource.text.replace(&find_text, &replace_text);
+        } else {
+            // Case-insensitive replacement
+            let lower_text = text_resource.text.to_lowercase();
+            let lower_find = find_text.to_lowercase();
+            if lower_text.contains(&lower_find) {
+                let mut result = String::new();
+                let mut last_pos = 0;
+                for (idx, _) in text_resource.text.match_indices(&find_text) {
+                    result.push_str(&text_resource.text[last_pos..idx]);
+                    result.push_str(&replace_text);
+                    last_pos = idx + find_text.len();
+                }
+                result.push_str(&text_resource.text[last_pos..]);
+                text_resource.text = result;
+            }
+        }
+        if original != text_resource.text {
+            count += 1;
+        }
+    }
+
+    // Note: Script replacement would require recompilation, so we skip it for now
+    // Users can manually edit scripts one by one
+
+    Ok(count)
+}
