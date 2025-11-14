@@ -66,6 +66,10 @@ interface AppState {
     sounds: ResourceInfo[];
     sprites: ResourceInfo[];
     scripts: ResourceInfo[];
+    texts: ResourceInfo[];
+    fonts: ResourceInfo[];
+    shapes: ResourceInfo[];
+    binary_data: ResourceInfo[];
   };
   selectedResource: { type: ResourceType; id: number; info: ResourceInfo } | null;
   loading: boolean;
@@ -81,6 +85,10 @@ function App() {
       sounds: [],
       sprites: [],
       scripts: [],
+      texts: [],
+      fonts: [],
+      shapes: [],
+      binary_data: [],
     },
     selectedResource: null,
     loading: false,
@@ -118,11 +126,15 @@ function App() {
       // Open the SWF file
       const swf = await invoke<SWFFile>('open_swf', { path });
 
-      // Get resources
+      // Get resources - all types
       const images = await invoke<ResourceInfo[]>('get_resources', { resourceType: 'images' });
       const sounds = await invoke<ResourceInfo[]>('get_resources', { resourceType: 'sounds' });
       const sprites = await invoke<ResourceInfo[]>('get_resources', { resourceType: 'sprites' });
       const scripts = await invoke<ResourceInfo[]>('get_resources', { resourceType: 'scripts' });
+      const texts = await invoke<ResourceInfo[]>('get_resources', { resourceType: 'texts' });
+      const fonts = await invoke<ResourceInfo[]>('get_resources', { resourceType: 'fonts' });
+      const shapes = await invoke<ResourceInfo[]>('get_resources', { resourceType: 'shapes' });
+      const binary_data = await invoke<ResourceInfo[]>('get_resources', { resourceType: 'binary_data' });
 
       // Get SWF info
       const info = await invoke<Record<string, string>>('get_swf_info', {});
@@ -135,12 +147,16 @@ function App() {
       console.log('Sounds:', sounds.length);
       console.log('Sprites:', sprites.length);
       console.log('Scripts:', scripts.length);
+      console.log('Texts:', texts.length);
+      console.log('Fonts:', fonts.length);
+      console.log('Shapes:', shapes.length);
+      console.log('Binary Data:', binary_data.length);
       console.log('Info:', info);
       console.log('==================');
 
       setState({
         swfFile: swf,
-        resources: { images, sounds, sprites, scripts },
+        resources: { images, sounds, sprites, scripts, texts, fonts, shapes, binary_data },
         selectedResource: null,
         loading: false,
         error: null,

@@ -7,6 +7,10 @@ interface FileTreeProps {
     sounds: ResourceInfo[];
     sprites: ResourceInfo[];
     scripts: ResourceInfo[];
+    texts: ResourceInfo[];
+    fonts: ResourceInfo[];
+    shapes: ResourceInfo[];
+    binary_data: ResourceInfo[];
   };
   onSelectResource: (type: ResourceType, id: number) => void;
   selectedResource?: { type: ResourceType; id: number };
@@ -18,7 +22,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
   selectedResource,
 }) => {
   const [expandedSections, setExpandedSections] = React.useState<Set<ResourceType>>(
-    new Set(['images', 'sounds', 'sprites', 'scripts'])
+    new Set(['images', 'sounds', 'sprites', 'scripts', 'texts', 'fonts', 'shapes', 'binary_data'])
   );
 
   const toggleSection = (section: ResourceType) => {
@@ -110,6 +114,10 @@ export const FileTree: React.FC<FileTreeProps> = ({
       {renderResourceList('sounds', resources.sounds, '🔊', 'badge-sound')}
       {renderResourceList('sprites', resources.sprites, '🎬', 'badge-sprite')}
       {renderResourceList('scripts', resources.scripts, '⚡', 'badge-script')}
+      {renderResourceList('texts', resources.texts, '📝', 'badge-text')}
+      {renderResourceList('fonts', resources.fonts, '🔤', 'badge-font')}
+      {renderResourceList('shapes', resources.shapes, '⬢', 'badge-shape')}
+      {renderResourceList('binary_data', resources.binary_data, '📦', 'badge-binary')}
     </div>
   );
 };
