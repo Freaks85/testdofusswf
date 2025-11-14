@@ -311,35 +311,95 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
                   {decompiled.split('\n').length} lines
                 </span>
               </div>
-              <button
-                onClick={() => {
-                  setIsEditing(!isEditing);
-                  setEditedCode(decompiled);
-                }}
-                className="btn-secondary"
-                style={{ fontSize: '13px', padding: '6px 12px' }}
-              >
-                {isEditing ? '👁️ View' : '✏️ Edit'}
-              </button>
+              {!isEditing && (
+                <button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setEditedCode(decompiled);
+                  }}
+                  className="btn-secondary"
+                  style={{ fontSize: '13px', padding: '6px 12px' }}
+                >
+                  ✏️ Edit Script
+                </button>
+              )}
             </div>
             {isEditing ? (
-              <textarea
-                value={editedCode}
-                onChange={(e) => setEditedCode(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '600px',
-                  background: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  border: 'none',
-                  padding: '16px',
-                  fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-                  fontSize: '13px',
-                  lineHeight: '1.6',
-                  resize: 'none',
-                  outline: 'none'
-                }}
-              />
+              <div>
+                <textarea
+                  value={editedCode}
+                  onChange={(e) => setEditedCode(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '600px',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    border: 'none',
+                    padding: '16px',
+                    fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                    fontSize: '13px',
+                    lineHeight: '1.6',
+                    resize: 'none',
+                    outline: 'none',
+                    borderBottom: '1px solid var(--border-default)'
+                  }}
+                />
+
+                {/* Action buttons */}
+                <div style={{
+                  padding: '12px 16px',
+                  background: 'var(--bg-secondary)',
+                  display: 'flex',
+                  gap: '8px',
+                  borderTop: '1px solid var(--border-default)'
+                }}>
+                  <button
+                    onClick={async () => {
+                      setSaving(true);
+                      try {
+                        await invoke('update_script', {
+                          scriptId: resourceId,
+                          newCode: editedCode
+                        });
+                        // Update the decompiled view with the new code
+                        setDecompiled(editedCode);
+                        setIsEditing(false);
+                        alert('Script updated successfully! Remember to save the SWF file.');
+                      } catch (err) {
+                        alert(`Failed to update script: ${err}`);
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                    disabled={saving}
+                    className="btn-success"
+                    style={{ fontSize: '13px', padding: '8px 16px' }}
+                  >
+                    {saving ? '💾 Saving...' : '💾 Save Changes'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditedCode(decompiled);
+                      setIsEditing(false);
+                    }}
+                    disabled={saving}
+                    className="btn-secondary"
+                    style={{ fontSize: '13px', padding: '8px 16px' }}
+                  >
+                    ❌ Cancel
+                  </button>
+                  <div style={{
+                    marginLeft: 'auto',
+                    fontSize: '12px',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 8px'
+                  }}>
+                    ⚠️ Note: Code is saved to memory. Use "Save SWF" to persist changes.
+                  </div>
+                </div>
+              </div>
             ) : (
               <pre className="code-editor" style={{
                 margin: 0,
