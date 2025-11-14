@@ -207,6 +207,28 @@ function App() {
     }
   };
 
+  const handleSaveSWF = async () => {
+    try {
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const filePath = await save({
+        defaultPath: state.swfFile?.path || 'modified.swf',
+        filters: [
+          {
+            name: 'SWF Files',
+            extensions: ['swf'],
+          },
+        ],
+      });
+
+      if (filePath) {
+        await invoke('save_swf_as', { outputPath: filePath });
+        alert('SWF file saved successfully!');
+      }
+    } catch (err) {
+      alert(`Save failed: ${err}`);
+    }
+  };
+
   const handleSelectResource = (type: ResourceType, id: number) => {
     const resourceList = state.resources[type as keyof typeof state.resources];
     if (!resourceList) return;
@@ -268,9 +290,14 @@ function App() {
             📁 Open SWF
           </button>
           {state.swfFile && (
-            <button onClick={handleExportAll} className="btn-success">
-              📤 Export All
-            </button>
+            <>
+              <button onClick={handleExportAll} className="btn-success">
+                📤 Export All
+              </button>
+              <button onClick={handleSaveSWF} className="btn-primary">
+                💾 Save SWF
+              </button>
+            </>
           )}
         </div>
       </div>

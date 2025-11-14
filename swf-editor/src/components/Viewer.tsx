@@ -25,6 +25,8 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
   const [error, setError] = React.useState<string | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedCode, setEditedCode] = React.useState<string>('');
+  const [editedText, setEditedText] = React.useState<string>('');
+  const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
     setLoading(true);
@@ -338,14 +340,28 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
               borderRadius: '8px',
               border: '1px solid var(--border-default)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <span style={{ fontSize: '32px' }}>📝</span>
-                <div>
-                  <h3 style={{ margin: 0, color: 'var(--text-accent)' }}>Text Field</h3>
-                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
-                    ID: {resourceId}
-                  </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '32px' }}>📝</span>
+                  <div>
+                    <h3 style={{ margin: 0, color: 'var(--text-accent)' }}>Text Field</h3>
+                    <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
+                      ID: {resourceId}
+                    </p>
+                  </div>
                 </div>
+                {!isEditing && (
+                  <button
+                    onClick={() => {
+                      setIsEditing(true);
+                      setEditedText(resourceInfo.name || '');
+                    }}
+                    className="btn-primary"
+                    style={{ fontSize: '13px', padding: '6px 12px' }}
+                  >
+                    ✏️ Edit Text
+                  </button>
+                )}
               </div>
 
               <div style={{
@@ -355,16 +371,70 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
                 marginTop: '16px'
               }}>
                 <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-secondary)' }}>Text Content</h4>
-                <div style={{
-                  padding: '12px',
-                  background: 'var(--bg-secondary)',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  color: 'var(--text-primary)',
-                  wordWrap: 'break-word'
-                }}>
-                  {resourceInfo.name || 'No text content'}
-                </div>
+                {isEditing ? (
+                  <>
+                    <textarea
+                      value={editedText}
+                      onChange={(e) => setEditedText(e.target.value)}
+                      style={{
+                        width: '100%',
+                        minHeight: '200px',
+                        padding: '12px',
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        color: 'var(--text-primary)',
+                        fontFamily: 'inherit',
+                        resize: 'vertical'
+                      }}
+                      placeholder="Enter text content..."
+                    />
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                      <button
+                        onClick={async () => {
+                          setSaving(true);
+                          try {
+                            await invoke('update_text', {
+                              textId: resourceId,
+                              newText: editedText
+                            });
+                            alert('Text updated successfully! Remember to save the SWF file.');
+                            setIsEditing(false);
+                            // Update display
+                            resourceInfo.name = editedText;
+                          } catch (err) {
+                            alert(`Failed to update text: ${err}`);
+                          } finally {
+                            setSaving(false);
+                          }
+                        }}
+                        className="btn-primary"
+                        disabled={saving}
+                      >
+                        {saving ? '💾 Saving...' : '💾 Save Changes'}
+                      </button>
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="btn-secondary"
+                        disabled={saving}
+                      >
+                        ❌ Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{
+                    padding: '12px',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    color: 'var(--text-primary)',
+                    wordWrap: 'break-word'
+                  }}>
+                    {resourceInfo.name || 'No text content'}
+                  </div>
+                )}
               </div>
             </div>
           </div>
