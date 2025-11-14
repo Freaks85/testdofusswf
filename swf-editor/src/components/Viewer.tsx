@@ -28,6 +28,12 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
   const [editedText, setEditedText] = React.useState<string>('');
   const [saving, setSaving] = React.useState(false);
 
+  // Image replacement state
+  const [replacingImage, setReplacingImage] = React.useState(false);
+  const [selectedImageFile, setSelectedImageFile] = React.useState<File | null>(null);
+  const [imagePreviewURL, setImagePreviewURL] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   React.useEffect(() => {
     setLoading(true);
     setError(null);
@@ -78,6 +84,99 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
     } catch (err) {
       alert(`Export failed: ${err}`);
     }
+  };
+
+  // Image replacement handlers
+  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file (PNG, JPEG, etc.)');
+      return;
+    }
+
+    setSelectedImageFile(file);
+
+    // Create preview URL
+    const url = URL.createObjectURL(file);
+    setImagePreviewURL(url);
+  };
+
+  const handleReplaceImage = async () => {
+    if (!selectedImageFile || !imagePreviewURL) {
+      alert('Please select an image first');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Read the file as array buffer
+      const arrayBuffer = await selectedImageFile.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+
+      // Load image to get dimensions
+      const img = new Image();
+      img.src = imagePreviewURL;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      // Convert to PNG if needed using canvas
+      let finalData = uint8Array;
+      let width = img.width;
+      let height = img.height;
+
+      // If JPEG, convert to PNG
+      if (selectedImageFile.type === 'image/jpeg') {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const blob = await new Promise<Blob>((resolve) => {
+            canvas.toBlob((b) => resolve(b!), 'image/png');
+          });
+          const buffer = await blob.arrayBuffer();
+          finalData = new Uint8Array(buffer);
+        }
+      }
+
+      // Call update_image command
+      await invoke('update_image', {
+        imageId: resourceId,
+        newImageData: Array.from(finalData),
+        width: width,
+        height: height,
+      });
+
+      // Update local display
+      setData(finalData);
+
+      // Clean up and reset
+      URL.revokeObjectURL(imagePreviewURL);
+      setImagePreviewURL(null);
+      setSelectedImageFile(null);
+      setReplacingImage(false);
+
+      alert('Image replaced successfully! Remember to save the SWF file.');
+    } catch (err) {
+      alert(`Failed to replace image: ${err}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelReplace = () => {
+    if (imagePreviewURL) {
+      URL.revokeObjectURL(imagePreviewURL);
+    }
+    setImagePreviewURL(null);
+    setSelectedImageFile(null);
+    setReplacingImage(false);
   };
 
   if (loading) {
@@ -204,31 +303,109 @@ export const Viewer: React.FC<ViewerProps> = ({ resourceType, resourceId, resour
         )}
 
         {resourceType === 'images' && data && (
-          <div className="panel-content" style={{ textAlign: 'center', padding: '20px' }}>
-            <div style={{
-              display: 'inline-block',
-              maxWidth: '100%',
-              background: 'repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 20px 20px',
-              padding: '10px',
-              borderRadius: '4px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-            }}>
-              <img
-                src={`data:image/png;base64,${arrayBufferToBase64(data)}`}
-                alt={`Image ${resourceId}`}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '600px',
-                  display: 'block',
-                  imageRendering: 'crisp-edges'
-                }}
-                onError={() => {
-                  setError('Failed to load image - data may be corrupted or in unsupported format');
-                }}
-              />
-            </div>
-            <div style={{ marginTop: '16px', color: 'var(--text-muted)', fontSize: '12px' }}>
-              <p>Dimensions: {resourceInfo.metadata?.width || '?'} x {resourceInfo.metadata?.height || '?'} • Format: {resourceInfo.metadata?.format || 'Unknown'}</p>
+          <div className="panel-content" style={{ padding: '20px' }}>
+            {/* Replace Image button */}
+            {!replacingImage && (
+              <div style={{ marginBottom: '16px' }}>
+                <button
+                  onClick={() => setReplacingImage(true)}
+                  className="btn-primary"
+                >
+                  🖼️ Replace Image
+                </button>
+              </div>
+            )}
+
+            {/* Image replacement interface */}
+            {replacingImage && (
+              <div style={{
+                background: 'var(--bg-tertiary)',
+                padding: '16px',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                border: '1px solid var(--border-default)'
+              }}>
+                <h3 style={{ margin: '0 0 12px 0', color: 'var(--text-accent)' }}>Replace Image</h3>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={handleImageFileSelect}
+                  style={{ marginBottom: '12px' }}
+                />
+
+                {imagePreviewURL && (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '12px',
+                    background: 'var(--bg-primary)',
+                    borderRadius: '6px'
+                  }}>
+                    <p style={{ margin: '0 0 8px 0', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                      Preview of new image:
+                    </p>
+                    <div style={{
+                      display: 'inline-block',
+                      background: 'repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 20px 20px',
+                      padding: '10px',
+                      borderRadius: '4px'
+                    }}>
+                      <img
+                        src={imagePreviewURL}
+                        alt="Preview"
+                        style={{ maxWidth: '300px', maxHeight: '300px', display: 'block' }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={handleReplaceImage}
+                    disabled={!selectedImageFile || saving}
+                    className="btn-success"
+                  >
+                    {saving ? '💾 Replacing...' : '💾 Replace & Save'}
+                  </button>
+                  <button
+                    onClick={handleCancelReplace}
+                    disabled={saving}
+                    className="btn-secondary"
+                  >
+                    ❌ Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Current image display */}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                display: 'inline-block',
+                maxWidth: '100%',
+                background: 'repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 20px 20px',
+                padding: '10px',
+                borderRadius: '4px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+              }}>
+                <img
+                  src={`data:image/png;base64,${arrayBufferToBase64(data)}`}
+                  alt={`Image ${resourceId}`}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '600px',
+                    display: 'block',
+                    imageRendering: 'crisp-edges'
+                  }}
+                  onError={() => {
+                    setError('Failed to load image - data may be corrupted or in unsupported format');
+                  }}
+                />
+              </div>
+              <div style={{ marginTop: '16px', color: 'var(--text-muted)', fontSize: '12px' }}>
+                <p>Dimensions: {resourceInfo.metadata?.width || '?'} x {resourceInfo.metadata?.height || '?'} • Format: {resourceInfo.metadata?.format || 'Unknown'}</p>
+              </div>
             </div>
           </div>
         )}
