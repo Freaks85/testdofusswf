@@ -736,3 +736,92 @@ pub async fn search_swf(
 
     Ok(results)
 }
+
+/// Update text resource content
+#[tauri::command]
+pub async fn update_text(
+    text_id: u16,
+    new_text: String,
+    state: State<'_, SharedState>,
+) -> Result<(), String> {
+    let mut app_state = state.lock().unwrap();
+
+    let swf = app_state
+        .current_swf
+        .as_mut()
+        .ok_or_else(|| "No SWF file loaded".to_string())?;
+
+    // Update text resource
+    if let Some(text_resource) = swf.resources.texts.get_mut(&text_id) {
+        text_resource.text = new_text;
+        Ok(())
+    } else {
+        Err(format!("Text resource {} not found", text_id))
+    }
+}
+
+/// Update image resource (replace with new PNG/JPEG data)
+#[tauri::command]
+pub async fn update_image(
+    image_id: u16,
+    new_image_data: Vec<u8>,
+    width: u16,
+    height: u16,
+    state: State<'_, SharedState>,
+) -> Result<(), String> {
+    let mut app_state = state.lock().unwrap();
+
+    let swf = app_state
+        .current_swf
+        .as_mut()
+        .ok_or_else(|| "No SWF file loaded".to_string())?;
+
+    // Update image resource
+    if let Some(image_resource) = swf.resources.images.get_mut(&image_id) {
+        image_resource.data = new_image_data;
+        image_resource.width = width;
+        image_resource.height = height;
+        Ok(())
+    } else {
+        Err(format!("Image resource {} not found", image_id))
+    }
+}
+
+/// Update script resource bytecode
+#[tauri::command]
+pub async fn update_script(
+    script_id: u16,
+    new_bytecode: Vec<u8>,
+    state: State<'_, SharedState>,
+) -> Result<(), String> {
+    let mut app_state = state.lock().unwrap();
+
+    let swf = app_state
+        .current_swf
+        .as_mut()
+        .ok_or_else(|| "No SWF file loaded".to_string())?;
+
+    // Update script resource
+    if let Some(script_resource) = swf.resources.scripts.get_mut(&script_id) {
+        script_resource.bytecode = new_bytecode;
+        script_resource.decompiled = None; // Clear cached decompilation
+        Ok(())
+    } else {
+        Err(format!("Script resource {} not found", script_id))
+    }
+}
+
+/// Save modified SWF to a new file
+#[tauri::command]
+pub async fn save_swf_as(
+    output_path: String,
+    state: State<'_, SharedState>,
+) -> Result<(), String> {
+    let app_state = state.lock().unwrap();
+
+    let swf = app_state
+        .get_current_swf()
+        .ok_or_else(|| "No SWF file loaded".to_string())?;
+
+    crate::core::writer::write_swf(swf, &output_path).map_err(|e| e.to_string())
+}
