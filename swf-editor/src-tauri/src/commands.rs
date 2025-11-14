@@ -389,3 +389,213 @@ pub async fn get_tags_debug(state: State<'_, SharedState>) -> Result<Vec<String>
 
     Ok(tags_info)
 }
+
+/// Search SWF for resources matching query
+#[tauri::command]
+pub async fn search_swf(
+    query: String,
+    search_mode: String, // "all", "name", "content"
+    case_sensitive: bool,
+    state: State<'_, SharedState>,
+) -> Result<Vec<serde_json::Value>, String> {
+    let app_state = state.state.lock().await;
+
+    let swf_file = app_state
+        .current_swf
+        .as_ref()
+        .ok_or("No SWF file loaded")?;
+
+    let mut results = Vec::new();
+
+    let query_lower = if case_sensitive {
+        query.clone()
+    } else {
+        query.to_lowercase()
+    };
+
+    // Helper function to check match
+    let matches = |text: &str| -> bool {
+        if case_sensitive {
+            text.contains(&query)
+        } else {
+            text.to_lowercase().contains(&query_lower)
+        }
+    };
+
+    // Search images
+    for resource in &swf_file.resources.images {
+        let name = format!("image_{}", resource.id);
+        let should_add = match search_mode.as_str() {
+            "name" => matches(&name),
+            "content" => false, // Can't search image content
+            _ => matches(&name) || matches(&format!("{}", resource.id)),
+        };
+
+        if should_add {
+            results.push(serde_json::json!({
+                "resource_type": "images",
+                "resource_id": resource.id,
+                "resource_name": name,
+                "match_type": "name",
+                "preview": format!("{}x{} {} image", resource.width, resource.height, 
+                                 match resource.format {
+                                     crate::core::types::ImageFormat::Png => "PNG",
+                                     crate::core::types::ImageFormat::Jpeg => "JPEG",
+                                     crate::core::types::ImageFormat::JpegWithAlpha => "JPEG+Alpha",
+                                 }),
+            }));
+        }
+    }
+
+    // Search sounds
+    for resource in &swf_file.resources.sounds {
+        let name = format!("sound_{}", resource.id);
+        let should_add = match search_mode.as_str() {
+            "name" => matches(&name),
+            "content" => false,
+            _ => matches(&name) || matches(&format!("{}", resource.id)),
+        };
+
+        if should_add {
+            results.push(serde_json::json!({
+                "resource_type": "sounds",
+                "resource_id": resource.id,
+                "resource_name": name,
+                "match_type": "name",
+                "preview": format!("{:?} sound at {} Hz", resource.format, resource.sample_rate),
+            }));
+        }
+    }
+
+    // Search scripts
+    for resource in &swf_file.resources.scripts {
+        let name_match = matches(&resource.name);
+        let mut content_match = false;
+        let mut preview = String::new();
+        let mut line_num = None;
+
+        // Check if we should search content
+        if search_mode == "content" || search_mode == "all" {
+            // Decompile and search in code
+            if let Some(decompiled) = &resource.decompiled {
+                if matches(decompiled) {
+                    content_match = true;
+                    // Find preview snippet
+                    if let Some(idx) = if case_sensitive {
+                        decompiled.find(&query)
+                    } else {
+                        decompiled.to_lowercase().find(&query_lower)
+                    } {
+                        let start = idx.saturating_sub(30);
+                        let end = (idx + query.len() + 30).min(decompiled.len());
+                        preview = decompiled[start..end].to_string();
+                        
+                        // Calculate line number
+                        line_num = Some(decompiled[..idx].lines().count() + 1);
+                    }
+                }
+            }
+        }
+
+        let should_add = match search_mode.as_str() {
+            "name" => name_match,
+            "content" => content_match,
+            _ => name_match || content_match,
+        };
+
+        if should_add {
+            results.push(serde_json::json!({
+                "resource_type": "scripts",
+                "resource_id": resource.id,
+                "resource_name": resource.name.clone(),
+                "match_type": if content_match { "content" } else { "name" },
+                "preview": if !preview.is_empty() { preview } else { resource.name.clone() },
+                "line_number": line_num,
+            }));
+        }
+    }
+
+    // Search sprites
+    for resource in &swf_file.resources.sprites {
+        let name = format!("sprite_{}", resource.id);
+        let should_add = match search_mode.as_str() {
+            "name" => matches(&name),
+            "content" => false,
+            _ => matches(&name) || matches(&format!("{}", resource.id)),
+        };
+
+        if should_add {
+            results.push(serde_json::json!({
+                "resource_type": "sprites",
+                "resource_id": resource.id,
+                "resource_name": name,
+                "match_type": "name",
+                "preview": format!("{} frames, {} nested tags", resource.frame_count, resource.tags.len()),
+            }));
+        }
+    }
+
+    // Search texts
+    for resource in &swf_file.resources.texts {
+        let name_match = matches(&resource.text);
+        let content_match = matches(&format!("{}", resource.id));
+
+        let should_add = match search_mode.as_str() {
+            "name" => name_match,
+            "content" => name_match,
+            _ => name_match || content_match,
+        };
+
+        if should_add {
+            results.push(serde_json::json!({
+                "resource_type": "texts",
+                "resource_id": resource.id,
+                "resource_name": resource.text.clone(),
+                "match_type": "content",
+                "preview": resource.text.clone(),
+            }));
+        }
+    }
+
+    // Search fonts
+    for resource in &swf_file.resources.fonts {
+        let name = resource.name.clone().unwrap_or_else(|| format!("font_{}", resource.id));
+        let should_add = match search_mode.as_str() {
+            "name" => matches(&name),
+            "content" => false,
+            _ => matches(&name) || matches(&format!("{}", resource.id)),
+        };
+
+        if should_add {
+            results.push(serde_json::json!({
+                "resource_type": "fonts",
+                "resource_id": resource.id,
+                "resource_name": name,
+                "match_type": "name",
+                "preview": format!("{} glyphs", resource.num_glyphs),
+            }));
+        }
+    }
+
+    // Search shapes
+    for resource in &swf_file.resources.shapes {
+        let name = format!("shape_{}", resource.id);
+        let should_add = match search_mode.as_str() {
+            "name" => matches(&name),
+            "content" => false,
+            _ => matches(&name) || matches(&format!("{}", resource.id)),
+        };
+
+        if should_add {
+            results.push(serde_json::json!({
+                "resource_type": "shapes",
+                "resource_id": resource.id,
+                "resource_name": name,
+                "match_type": "name",
+                "preview": format!("Vector shape ({} bytes)", resource.data.len()),
+            }));
+        }
+    }
+
+    Ok(results)
+}

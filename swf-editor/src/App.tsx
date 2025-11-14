@@ -4,6 +4,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { SWFFile, ResourceInfo, ResourceType } from './types';
 import { FileTree } from './components/FileTree';
 import { Viewer } from './components/Viewer';
+import { SearchPanel } from './components/SearchPanel';
 import './App.css';
 
 // Component to show debug info about tags
@@ -88,6 +89,27 @@ function App() {
   });
 
   const [isDragging, setIsDragging] = React.useState(false);
+  const [searchVisible, setSearchVisible] = React.useState(false);
+
+  // Handle Ctrl+F keyboard shortcut
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        if (state.swfFile) {
+          setSearchVisible(true);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [state.swfFile]);
+
+  const handleSearchResultSelect = (type: string, id: number) => {
+    const resourceType = type as ResourceType;
+    handleSelectResource(resourceType, id);
+  };
 
   const loadSWFFile = async (path: string) => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
@@ -333,6 +355,13 @@ function App() {
           {state.resources.scripts.length}
         </div>
       )}
+
+      {/* Search Panel */}
+      <SearchPanel
+        visible={searchVisible}
+        onClose={() => setSearchVisible(false)}
+        onSelectResult={handleSearchResultSelect}
+      />
     </div>
   );
 }

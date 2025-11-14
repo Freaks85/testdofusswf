@@ -530,3 +530,59 @@ pre {
 
 .cursor-pointer { cursor: pointer; }
 .select-none { user-select: none; }
+/* Search Panel */
+.search-panel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.search-panel {
+  width: 100%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideDown 0.2s ease-out;
+}
+
+.search-panel .panel-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.search-panel .panel-footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-secondary);
+}
+
+.search-result-item:hover {
+  transform: translateX(4px);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Additional utility classes */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.font-medium { font-weight: 500; }
+.monospace { font-family: 'Consolas', 'Monaco', 'Courier New', monospace; }
