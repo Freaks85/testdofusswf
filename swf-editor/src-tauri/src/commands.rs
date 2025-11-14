@@ -398,7 +398,7 @@ pub async fn search_swf(
     case_sensitive: bool,
     state: State<'_, SharedState>,
 ) -> Result<Vec<serde_json::Value>, String> {
-    let app_state = state.state.lock().await;
+    let app_state = state.lock().await;
 
     let swf_file = app_state
         .current_swf

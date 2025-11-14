@@ -317,18 +317,7 @@ fn extract_resources(tags: &[crate::core::types::Tag]) -> Resources {
                 num_glyphs,
                 data,
                 ..
-            } | Tag::DefineFont4 {
-                character_id,
-                name,
-                data,
-                ..
             } => {
-                let glyphs = if let Tag::DefineFont4 { .. } = tag {
-                    0 // Font4 doesn't have num_glyphs in our structure
-                } else {
-                    *num_glyphs
-                };
-
                 resources.fonts.insert(
                     *character_id,
                     FontResource {
@@ -338,7 +327,27 @@ fn extract_resources(tags: &[crate::core::types::Tag]) -> Resources {
                         } else {
                             Some(name.clone())
                         },
-                        num_glyphs: glyphs,
+                        num_glyphs: *num_glyphs,
+                        data: data.clone(),
+                    },
+                );
+            }
+            Tag::DefineFont4 {
+                character_id,
+                name,
+                data,
+                ..
+            } => {
+                resources.fonts.insert(
+                    *character_id,
+                    FontResource {
+                        id: *character_id,
+                        name: if name.is_empty() {
+                            None
+                        } else {
+                            Some(name.clone())
+                        },
+                        num_glyphs: 0,
                         data: data.clone(),
                     },
                 );
