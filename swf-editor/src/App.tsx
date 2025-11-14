@@ -127,6 +127,17 @@ function App() {
       // Get SWF info
       const info = await invoke<Record<string, string>>('get_swf_info', {});
 
+      // Debug logging
+      console.log('=== SWF LOADED ===');
+      console.log('File:', path);
+      console.log('Tags:', swf.tags.length);
+      console.log('Images:', images.length);
+      console.log('Sounds:', sounds.length);
+      console.log('Sprites:', sprites.length);
+      console.log('Scripts:', scripts.length);
+      console.log('Info:', info);
+      console.log('==================');
+
       setState({
         swfFile: swf,
         resources: { images, sounds, sprites, scripts },
