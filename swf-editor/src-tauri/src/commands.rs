@@ -84,7 +84,7 @@ pub async fn get_resources(
             }
         }
         "scripts" => {
-            for (_id, script) in &swf.resources.scripts {
+            for (id, script) in &swf.resources.scripts {
                 let mut metadata = HashMap::new();
                 metadata.insert("script_type".to_string(), format!("{:?}", script.script_type));
                 metadata.insert("name".to_string(), script.name.clone());
@@ -422,7 +422,7 @@ pub async fn search_swf(
     };
 
     // Search images
-    for resource in &swf_file.resources.images {
+    for (_key, resource) in &swf_file.resources.images {
         let name = format!("image_{}", resource.id);
         let should_add = match search_mode.as_str() {
             "name" => matches(&name),
@@ -447,7 +447,7 @@ pub async fn search_swf(
     }
 
     // Search sounds
-    for resource in &swf_file.resources.sounds {
+    for (_key, resource) in &swf_file.resources.sounds {
         let name = format!("sound_{}", resource.id);
         let should_add = match search_mode.as_str() {
             "name" => matches(&name),
@@ -467,7 +467,7 @@ pub async fn search_swf(
     }
 
     // Search scripts
-    for resource in &swf_file.resources.scripts {
+    for (_key, resource) in &swf_file.resources.scripts {
         let name_match = matches(&resource.name);
         let mut content_match = false;
         let mut preview = String::new();
@@ -515,7 +515,7 @@ pub async fn search_swf(
     }
 
     // Search sprites
-    for resource in &swf_file.resources.sprites {
+    for (_key, resource) in &swf_file.resources.sprites {
         let name = format!("sprite_{}", resource.id);
         let should_add = match search_mode.as_str() {
             "name" => matches(&name),
@@ -535,7 +535,7 @@ pub async fn search_swf(
     }
 
     // Search texts
-    for resource in &swf_file.resources.texts {
+    for (_key, resource) in &swf_file.resources.texts {
         let name_match = matches(&resource.text);
         let content_match = matches(&format!("{}", resource.id));
 
@@ -557,7 +557,7 @@ pub async fn search_swf(
     }
 
     // Search fonts
-    for resource in &swf_file.resources.fonts {
+    for (_key, resource) in &swf_file.resources.fonts {
         let name = resource.name.clone().unwrap_or_else(|| format!("font_{}", resource.id));
         let should_add = match search_mode.as_str() {
             "name" => matches(&name),
@@ -577,7 +577,7 @@ pub async fn search_swf(
     }
 
     // Search shapes
-    for resource in &swf_file.resources.shapes {
+    for (_key, resource) in &swf_file.resources.shapes {
         let name = format!("shape_{}", resource.id);
         let should_add = match search_mode.as_str() {
             "name" => matches(&name),

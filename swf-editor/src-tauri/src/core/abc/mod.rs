@@ -610,7 +610,7 @@ fn parse_trait_info(cursor: &mut Cursor<&[u8]>) -> Result<TraitInfo, String> {
     let kind = kind_byte & 0x0F;
 
     // Read trait data (simplified - just skip it)
-    let _data = Vec::new();
+    let data = Vec::new();
     match kind {
         0 | 6 => { // Slot, Const
             read_u30(cursor)?;
