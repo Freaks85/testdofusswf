@@ -377,9 +377,15 @@ function App() {
           }}
         >
           <span className="status-dot status-success"></span>
-          <strong>Status:</strong> Ready | <strong>File:</strong> {state.swfFile.path} | <strong>Tags:</strong> {state.swfFile.tags.length} | <strong>Images:</strong>{' '}
-          {state.resources.images.length} | <strong>Sounds:</strong> {state.resources.sounds.length} | <strong>Scripts:</strong>{' '}
-          {state.resources.scripts.length}
+          <strong>Status:</strong> Ready | <strong>File:</strong> {state.swfFile.path} | <strong>Tags:</strong> {state.swfFile.tags.length} |
+          <strong> Images:</strong> {state.resources.images.length} |
+          <strong>Sounds:</strong> {state.resources.sounds.length} |
+          <strong>Sprites:</strong> {state.resources.sprites.length} |
+          <strong> Scripts:</strong> {state.resources.scripts.length} |
+          <strong>Texts:</strong> {state.resources.texts.length} |
+          <strong>Fonts:</strong> {state.resources.fonts.length} |
+          <strong>Shapes:</strong> {state.resources.shapes.length} |
+          <strong>Binary:</strong> {state.resources.binary_data.length}
         </div>
       )}
 
